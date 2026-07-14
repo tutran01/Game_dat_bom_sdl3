@@ -3,5 +3,5 @@
     <Platform Name="x64" />
     <Platform Name="x86" />
   </Configurations>
-  <Project Path="Boom1/Boom1.vcxproj" />
+  <Project Path="Boom1/Boom1.vcxproj" Id="7a75b5c0-ecf7-4007-aec8-8d662cad6505" />
 </Solution>
