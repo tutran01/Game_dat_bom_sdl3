@@ -1,111 +1,228 @@
 #include <SDL3/SDL.h>
-#include <SDL3_image/SDL_image.h> // Thư viện để đọc ảnh PNG
+#include <SDL3_image/SDL_image.h>
 #include <iostream>
 
-// Cấu hình kích thước game
-const int MAP_ROWS = 15;   // Bản đồ gồm 15 hàng
-const int MAP_COLS = 20;   // Bản đồ gồm 20 cột
-const int TILE_SIZE = 40;  // Mỗi ô vuông có kích thước 40x40 pixel
+using namespace std;
 
-const int SCREEN_WIDTH = MAP_COLS * TILE_SIZE;  // 800 pixel
-const int SCREEN_HEIGHT = MAP_ROWS * TILE_SIZE; // 600 pixel
+const int MAPS_ROWS = 25;
+const int MAPS_COLS = 30;
+const int TILE_SIZE = 40;
 
-// Định nghĩa Ma trận Bản đồ (0: Đất trống, 1: Tường đá, 2: Thùng gỗ)
-int tileMap[MAP_ROWS][MAP_COLS] = {
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 0, 1},
-    {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1},
-    {1, 2, 0, 2, 2, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 1},
-    {1, 0, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 1},
-    {1, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 0, 1},
-    {1, 0, 1, 0, 1, 0, 1, 2, 1, 0, 1, 0, 1, 0, 1, 2, 1, 0, 1, 1},
-    {1, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 0, 2, 1},
-    {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1},
-    {1, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 0, 1},
-    {1, 0, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 1},
-    {1, 2, 0, 2, 2, 0, 0, 2, 0, 0, 2, 2, 0, 0, 2, 2, 0, 0, 2, 1},
-    {1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 0, 1, 1},
-    {1, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 2, 0, 0, 0, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1}
+const int SCREEN_WIDTH = MAPS_COLS * TILE_SIZE;
+const int SCREEN_HEIGHT = MAPS_ROWS * TILE_SIZE;
+
+// Trang thai cua game
+enum GameState {
+    STATE_MENU,
+    STATE_PLAYING
 };
 
+int tileMap[MAPS_ROWS][MAPS_COLS] = {
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+    {1, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 1},
+    {1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 1},
+    {1, 2, 2, 2, 0, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 2, 2, 1},
+    {1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 1},
+    {1, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 1},
+    {1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
+    {1, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 1},
+    {1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
+    {1, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 0, 2, 2, 1},
+    {1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 1},
+    {1, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 1},
+    {1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
+    {1, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 1},
+    {1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
+    {1, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 0, 2, 2, 1},
+    {1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 1},
+    {1, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 1},
+    {1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
+    {1, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 1},
+    {1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
+    {1, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 0, 2, 2, 1},
+    {1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 1},
+    {1, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 1},
+    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
+};
+
+// Kiem tra nhan vat o vi tri (x, y) co dam vao tuong (1) hoac hop (2) khong.
+// x, y la goc tren-trai cua nhan vat, kich thuoc TILE_SIZE x TILE_SIZE.
+bool biChan(float x, float y) {
+    int cotTrai = (int)(x) / TILE_SIZE;
+    int cotPhai = (int)(x + TILE_SIZE - 1) / TILE_SIZE;
+    int hangTren = (int)(y) / TILE_SIZE;
+    int hangDuoi = (int)(y + TILE_SIZE - 1) / TILE_SIZE;
+
+    // Ra ngoai bien -> coi nhu bi chan
+    if (cotTrai < 0 || hangTren < 0 || cotPhai >= MAPS_COLS || hangDuoi >= MAPS_ROWS)
+        return true;
+
+    for (int r = hangTren; r <= hangDuoi; ++r) {
+        for (int c = cotTrai; c <= cotPhai; ++c) {
+            if (tileMap[r][c] == 1 || tileMap[r][c] == 2)
+                return true;
+        }
+    }
+    return false;
+}
+
 int main(int argc, char* argv[]) {
-    // 1. Khởi tạo SDL3
+
     if (!SDL_Init(SDL_INIT_VIDEO)) {
-        std::cout << "Lỗi khởi tạo SDL3: " << SDL_GetError() << std::endl;
+        cout << "Loi khoi tao SDL3: " << SDL_GetError() << endl;
         return -1;
     }
 
-    // 2. Tạo cửa sổ và Trình vẽ
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
-    if (!SDL_CreateWindowAndRenderer("Game Dat Boom - Tuan 2: Bản Đồ", SCREEN_WIDTH, SCREEN_HEIGHT, 0, &window, &renderer)) {
-        std::cout << "Lỗi tạo cửa sổ: " << SDL_GetError() << std::endl;
+
+    if (!SDL_CreateWindowAndRenderer("Game Dat Boom - SDL3", SCREEN_WIDTH, SCREEN_HEIGHT, 0, &window, &renderer)) {
+        cout << "Loi tao cua so/trinh ve: " << SDL_GetError() << endl;
         SDL_Quit();
         return -1;
     }
 
-    // 3. Tải hình ảnh gạch đá từ thư mục vào Game (Sử dụng SDL3_image)
+    // Anh ban do
     SDL_Texture* groundTex = IMG_LoadTexture(renderer, "ground.png");
     SDL_Texture* wallTex = IMG_LoadTexture(renderer, "wall.png");
     SDL_Texture* boxTex = IMG_LoadTexture(renderer, "box.png");
 
-    // Kiểm tra xem có bị tải lỗi ảnh không
     if (!groundTex || !wallTex || !boxTex) {
-        std::cout << "Lỗi: Không tìm thấy các file ảnh bản đồ! Hãy kiểm tra lại vị trí ảnh." << std::endl;
+        cout << "Loi: Khong tim thay cac file anh ban do!" << endl;
     }
 
-    // 4. Vòng lặp Game Loop
+    // Anh nen menu
+    SDL_Texture* menuTex = IMG_LoadTexture(renderer, "menu.png");
+    if (!menuTex) {
+        cout << "Chua co menu.png - menu se dung nen mau don gian." << endl;
+    }
+
+    // Anh nhan vat
+    SDL_Texture* nguoiChoiTex = IMG_LoadTexture(renderer, "player.png");
+    if (!nguoiChoiTex) {
+        cout << "Khong tim thay player.png!" << endl;
+    }
+
+    // Vi tri va toc do nhan vat (tinh theo pixel). Bat dau o o (hang 1, cot 1).
+    float nguoiChoiX = 1 * TILE_SIZE;
+    float nguoiChoiY = 1 * TILE_SIZE;
+    const float tocDo = 3.0f;   // pixel moi khung hinh
+
     bool isRunning = true;
+    GameState state = STATE_MENU;
     SDL_Event event;
 
     while (isRunning) {
-        // Xử lý sự kiện tắt game
+
+        // ===== XU LY SU KIEN =====
         while (SDL_PollEvent(&event)) {
             if (event.type == SDL_EVENT_QUIT) {
                 isRunning = false;
             }
-        }
+            else if (event.type == SDL_EVENT_KEY_DOWN) {
 
-        // Xóa màn hình cũ để vẽ mới
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-        SDL_RenderClear(renderer);
-
-        // --- THUẬT TOÁN VẼ BẢN ĐỒ ---
-        // Duyệt qua từng ô của mảng 2 chiều bằng 2 vòng lặp lồng nhau
-        for (int r = 0; r < MAP_ROWS; ++r) {
-            for (int c = 0; c < MAP_COLS; ++c) {
-
-                // Xác định vị trí (tọa độ pixel X, Y) của ô gạch trên màn hình
-                SDL_FRect destRect;
-                destRect.x = c * TILE_SIZE; // Vị trí cột nhân với kích thước ô
-                destRect.y = r * TILE_SIZE; // Vị trí hàng nhân với kích thước ô
-                destRect.w = TILE_SIZE;
-                destRect.h = TILE_SIZE;
-
-                // Luôn vẽ nền đất ở dưới trước để làm nền
-                SDL_RenderTexture(renderer, groundTex, nullptr, &destRect);
-
-                // Nếu tại ô đó là số 1 -> Vẽ đè viên tường đá lên
-                if (tileMap[r][c] == 1) {
-                    SDL_RenderTexture(renderer, wallTex, nullptr, &destRect);
+                if (state == STATE_MENU) {
+                    if (event.key.key == SDLK_RETURN || event.key.key == SDLK_SPACE) {
+                        state = STATE_PLAYING;
+                    }
+                    else if (event.key.key == SDLK_ESCAPE) {
+                        isRunning = false;
+                    }
                 }
-                // Nếu tại ô đó là số 2 -> Vẽ đè cái thùng gỗ lên
-                else if (tileMap[r][c] == 2) {
-                    SDL_RenderTexture(renderer, boxTex, nullptr, &destRect);
+                else if (state == STATE_PLAYING) {
+                    if (event.key.key == SDLK_ESCAPE) {
+                        state = STATE_MENU;
+                    }
                 }
             }
         }
 
-        // Cập nhật hiển thị lên màn hình
+        // ===== CAP NHAT (di chuyen nhan vat) =====
+        if (state == STATE_PLAYING) {
+            const bool* phim = SDL_GetKeyboardState(nullptr);
+
+            // Di chuyen theo truc X, kiem tra va cham rieng de van truot duoc
+            float moiX = nguoiChoiX;
+            if (phim[SDL_SCANCODE_LEFT])  moiX -= tocDo;
+            if (phim[SDL_SCANCODE_RIGHT]) moiX += tocDo;
+            if (!biChan(moiX, nguoiChoiY))
+                nguoiChoiX = moiX;
+
+            // Di chuyen theo truc Y
+            float moiY = nguoiChoiY;
+            if (phim[SDL_SCANCODE_UP])   moiY -= tocDo;
+            if (phim[SDL_SCANCODE_DOWN]) moiY += tocDo;
+            if (!biChan(nguoiChoiX, moiY))
+                nguoiChoiY = moiY;
+        }
+
+        // ===== VE MAN HINH =====
+        if (state == STATE_MENU) {
+            if (menuTex) {
+                SDL_RenderTexture(renderer, menuTex, nullptr, nullptr);
+            }
+            else {
+                // Fallback khi chua co anh menu
+                SDL_SetRenderDrawColor(renderer, 20, 20, 40, 255);
+                SDL_RenderClear(renderer);
+
+                SDL_FRect startBtn = { SCREEN_WIDTH / 2.0f - 120, 380, 240, 60 };
+                SDL_SetRenderDrawColor(renderer, 60, 180, 75, 255);
+                SDL_RenderFillRect(renderer, &startBtn);
+
+                SDL_FRect quitBtn = { SCREEN_WIDTH / 2.0f - 120, 470, 240, 60 };
+                SDL_SetRenderDrawColor(renderer, 200, 60, 60, 255);
+                SDL_RenderFillRect(renderer, &quitBtn);
+            }
+        }
+        else if (state == STATE_PLAYING) {
+            // Ve ban do
+            SDL_SetRenderDrawColor(renderer, 20, 40, 80, 255);
+            SDL_RenderClear(renderer);
+
+            for (int r = 0; r < MAPS_ROWS; ++r) {
+                for (int c = 0; c < MAPS_COLS; ++c) {
+
+                    SDL_FRect destRect;
+                    destRect.x = c * TILE_SIZE;
+                    destRect.y = r * TILE_SIZE;
+                    destRect.w = TILE_SIZE;
+                    destRect.h = TILE_SIZE;
+
+                    SDL_RenderTexture(renderer, groundTex, nullptr, &destRect);
+
+                    if (tileMap[r][c] == 1) {
+                        SDL_RenderTexture(renderer, wallTex, nullptr, &destRect);
+                    }
+                    else if (tileMap[r][c] == 2) {
+                        SDL_RenderTexture(renderer, boxTex, nullptr, &destRect);
+                    }
+                }
+            }
+
+            // Ve nhan vat len tren ban do.
+            // Sprite goc 20x30 (ti le 2:3) -> ve rong 24, cao 36, canh giua trong o 40x40.
+            const float rongVe = 24.0f;
+            const float caoVe = 36.0f;
+            SDL_FRect oNhanVat = {
+                nguoiChoiX + (TILE_SIZE - rongVe) / 2.0f,   // canh giua ngang
+                nguoiChoiY + (TILE_SIZE - caoVe),           // sat day o
+                rongVe,
+                caoVe
+            };
+            SDL_RenderTexture(renderer, nguoiChoiTex, nullptr, &oNhanVat);
+        }
+
         SDL_RenderPresent(renderer);
-        SDL_Delay(16); // ~60 FPS
+        SDL_Delay(16);
     }
 
-    // 5. Giải phóng tài nguyên ảnh và bộ nhớ trước khi thoát
+    // ===== DON DEP =====
     SDL_DestroyTexture(groundTex);
     SDL_DestroyTexture(wallTex);
     SDL_DestroyTexture(boxTex);
+    SDL_DestroyTexture(menuTex);
+    SDL_DestroyTexture(nguoiChoiTex);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
