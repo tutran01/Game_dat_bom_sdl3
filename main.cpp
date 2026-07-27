@@ -97,16 +97,22 @@ int main(int argc, char* argv[]) {
         cout << "Chua co menu.png - menu se dung nen mau don gian." << endl;
     }
 
-    // Anh nhan vat
-    SDL_Texture* nguoiChoiTex = IMG_LoadTexture(renderer, "player.png");
-    if (!nguoiChoiTex) {
-        cout << "Khong tim thay player.png!" << endl;
+    // Anh nhan vat theo 4 huong
+    SDL_Texture* nguoiChoiTrai  = IMG_LoadTexture(renderer, "player_trai.png");
+    SDL_Texture* nguoiChoiPhai  = IMG_LoadTexture(renderer, "player_phai.png");
+    SDL_Texture* nguoiChoiLen   = IMG_LoadTexture(renderer, "player_len.png");
+    SDL_Texture* nguoiChoiXuong = IMG_LoadTexture(renderer, "player_xuong.png");
+    if (!nguoiChoiTrai || !nguoiChoiPhai || !nguoiChoiLen || !nguoiChoiXuong) {
+        cout << "Khong tim thay file player_*.png!" << endl;
     }
 
     // Vi tri va toc do nhan vat (tinh theo pixel). Bat dau o o (hang 1, cot 1).
     float nguoiChoiX = 1 * TILE_SIZE;
     float nguoiChoiY = 1 * TILE_SIZE;
     const float tocDo = 3.0f;   // pixel moi khung hinh
+
+    // Huong nhan vat dang quay mat: 0=xuong, 1=len, 2=trai, 3=phai
+    int huong = 0;
 
     bool isRunning = true;
     GameState state = STATE_MENU;
@@ -142,18 +148,18 @@ int main(int argc, char* argv[]) {
             const bool* phim = SDL_GetKeyboardState(nullptr);
 
             // Di chuyen theo truc X, kiem tra va cham rieng de van truot duoc
-            float moiX = nguoiChoiX;
-            if (phim[SDL_SCANCODE_LEFT])  moiX -= tocDo;
-            if (phim[SDL_SCANCODE_RIGHT]) moiX += tocDo;
-            if (!biChan(moiX, nguoiChoiY))
-                nguoiChoiX = moiX;
+            float NewX = nguoiChoiX;
+            if (phim[SDL_SCANCODE_LEFT])  { NewX -= tocDo; huong = 2; }
+            if (phim[SDL_SCANCODE_RIGHT]) { NewX += tocDo; huong = 3; }
+            if (!biChan(NewX, nguoiChoiY))
+                nguoiChoiX = NewX;
 
             // Di chuyen theo truc Y
-            float moiY = nguoiChoiY;
-            if (phim[SDL_SCANCODE_UP])   moiY -= tocDo;
-            if (phim[SDL_SCANCODE_DOWN]) moiY += tocDo;
-            if (!biChan(nguoiChoiX, moiY))
-                nguoiChoiY = moiY;
+            float NewY = nguoiChoiY;
+            if (phim[SDL_SCANCODE_UP])   { NewY -= tocDo; huong = 1; }
+            if (phim[SDL_SCANCODE_DOWN]) { NewY += tocDo; huong = 0; }
+            if (!biChan(nguoiChoiX, NewY))
+                nguoiChoiY = NewY;
         }
 
         // ===== VE MAN HINH =====
@@ -161,19 +167,7 @@ int main(int argc, char* argv[]) {
             if (menuTex) {
                 SDL_RenderTexture(renderer, menuTex, nullptr, nullptr);
             }
-            else {
-                // Fallback khi chua co anh menu
-                SDL_SetRenderDrawColor(renderer, 20, 20, 40, 255);
-                SDL_RenderClear(renderer);
-
-                SDL_FRect startBtn = { SCREEN_WIDTH / 2.0f - 120, 380, 240, 60 };
-                SDL_SetRenderDrawColor(renderer, 60, 180, 75, 255);
-                SDL_RenderFillRect(renderer, &startBtn);
-
-                SDL_FRect quitBtn = { SCREEN_WIDTH / 2.0f - 120, 470, 240, 60 };
-                SDL_SetRenderDrawColor(renderer, 200, 60, 60, 255);
-                SDL_RenderFillRect(renderer, &quitBtn);
-            }
+            
         }
         else if (state == STATE_PLAYING) {
             // Ve ban do
@@ -202,15 +196,22 @@ int main(int argc, char* argv[]) {
 
             // Ve nhan vat len tren ban do.
             // Sprite goc 20x30 (ti le 2:3) -> ve rong 24, cao 36, canh giua trong o 40x40.
-            const float rongVe = 24.0f;
-            const float caoVe = 36.0f;
+            const float Verong = 24.0f;
+            const float Vecao = 36.0f;
             SDL_FRect oNhanVat = {
-                nguoiChoiX + (TILE_SIZE - rongVe) / 2.0f,   // canh giua ngang
-                nguoiChoiY + (TILE_SIZE - caoVe),           // sat day o
-                rongVe,
-                caoVe
+                nguoiChoiX + (TILE_SIZE - Verong) / 2.0f,   // canh giua ngang
+                nguoiChoiY + (TILE_SIZE - Vecao),           // sat day o
+                Verong,
+                Vecao
             };
-            SDL_RenderTexture(renderer, nguoiChoiTex, nullptr, &oNhanVat);
+
+            // Chon hinh theo huong dang quay mat
+            SDL_Texture* hinhNhanVat = nguoiChoiXuong;
+            if (huong == 1) hinhNhanVat = nguoiChoiLen;
+            else if (huong == 2) hinhNhanVat = nguoiChoiTrai;
+            else if (huong == 3) hinhNhanVat = nguoiChoiPhai;
+
+            SDL_RenderTexture(renderer, hinhNhanVat, nullptr, &oNhanVat);
         }
 
         SDL_RenderPresent(renderer);
@@ -222,7 +223,10 @@ int main(int argc, char* argv[]) {
     SDL_DestroyTexture(wallTex);
     SDL_DestroyTexture(boxTex);
     SDL_DestroyTexture(menuTex);
-    SDL_DestroyTexture(nguoiChoiTex);
+    SDL_DestroyTexture(nguoiChoiTrai);
+    SDL_DestroyTexture(nguoiChoiPhai);
+    SDL_DestroyTexture(nguoiChoiLen);
+    SDL_DestroyTexture(nguoiChoiXuong);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
