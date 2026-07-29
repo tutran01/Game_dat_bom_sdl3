@@ -110,15 +110,10 @@ int main(int argc, char* argv[]) {
 
     // Anh nen menu
     SDL_Texture* menuTex = IMG_LoadTexture(renderer, "menu.png");
-    if (!menuTex) {
-        cout << "Chua co menu.png - menu se dung nen mau don gian." << endl;
-    }
+    
 
     // Sprite sheet nhan vat: 1 anh chua ca 12 khung (4 huong x 3 khung di bo)
-    SDL_Texture* nguoiChoiSheet = IMG_LoadTexture(renderer, "player_sheet.png");
-    if (!nguoiChoiSheet) {
-        cout << "Khong tim thay player_sheet.png!" << endl;
-    }
+    SDL_Texture* nguoiChoiSheet = IMG_LoadTexture(renderer, "player_sheet.png");    
 
     // Anh bom va lua no
     SDL_Texture* bomTex = IMG_LoadTexture(renderer, "bomb.png");
@@ -202,20 +197,46 @@ int main(int argc, char* argv[]) {
             const bool* phim = SDL_GetKeyboardState(nullptr);
 
             bool dangDi = false;   // co bam phim di chuyen trong khung nay khong?
+            bool diNgang = false;  // dang di trai/phai?
+            bool diDoc = false;    // dang di len/xuong?
 
             // Di chuyen theo truc X, kiem tra va cham rieng de van truot duoc
             float NewX = nguoiChoiX;
-            if (phim[SDL_SCANCODE_LEFT])  { NewX -= tocDo; huong = 2; dangDi = true; }
-            if (phim[SDL_SCANCODE_RIGHT]) { NewX += tocDo; huong = 3; dangDi = true; }
+            if (phim[SDL_SCANCODE_LEFT]  || phim[SDL_SCANCODE_A]) 
+            { NewX -= tocDo; huong = 2; dangDi = true; diNgang = true; }
+            if (phim[SDL_SCANCODE_RIGHT] || phim[SDL_SCANCODE_D]) 
+            { NewX += tocDo; huong = 3; dangDi = true; diNgang = true; }
             if (!biChan(NewX, nguoiChoiY))
                 nguoiChoiX = NewX;
-
-            // Di chuyen theo truc Y
             float NewY = nguoiChoiY;
-            if (phim[SDL_SCANCODE_UP])   { NewY -= tocDo; huong = 1; dangDi = true; }
-            if (phim[SDL_SCANCODE_DOWN]) { NewY += tocDo; huong = 0; dangDi = true; }
+            if (phim[SDL_SCANCODE_UP]   || phim[SDL_SCANCODE_W]) 
+            { NewY -= tocDo; huong = 1; dangDi = true; diDoc = true; }
+            if (phim[SDL_SCANCODE_DOWN] || phim[SDL_SCANCODE_S]) 
+            { NewY += tocDo; huong = 0; dangDi = true; diDoc = true; }
             if (!biChan(nguoiChoiX, NewY))
                 nguoiChoiY = NewY;
+
+            // ----- Auto-canh lane: chong ket khi lach qua khe giua hai tuong -----
+            // Khi di ngang, keo Y ve hang gan nhat (moi hang = boi so cua TILE_SIZE)
+            if (diNgang) {
+                int hangGan = (int)((nguoiChoiY + TILE_SIZE / 2.0f) / TILE_SIZE);
+                float dich = hangGan * (float)TILE_SIZE;
+                float snapY = nguoiChoiY;
+                if (snapY < dich) { snapY += tocDo; if (snapY > dich) snapY = dich; }
+                else if (snapY > dich) { snapY -= tocDo; if (snapY < dich) snapY = dich; }
+                if (!biChan(nguoiChoiX, snapY))
+                    nguoiChoiY = snapY;
+            }
+            // Khi di doc, keo X ve cot gan nhat
+            if (diDoc) {
+                int cotGan = (int)((nguoiChoiX + TILE_SIZE / 2.0f) / TILE_SIZE);
+                float dich = cotGan * (float)TILE_SIZE;
+                float snapX = nguoiChoiX;
+                if (snapX < dich) { snapX += tocDo; if (snapX > dich) snapX = dich; }
+                else if (snapX > dich) { snapX -= tocDo; if (snapX < dich) snapX = dich; }
+                if (!biChan(snapX, nguoiChoiY))
+                    nguoiChoiX = snapX;
+            }
 
             // Cap nhat hoat anh
             Uint64 bayGio = SDL_GetTicks();
