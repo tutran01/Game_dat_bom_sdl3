@@ -2,6 +2,8 @@
 #include <SDL3_image/SDL_image.h>
 #include <iostream>
 #include <vector>
+#include <cstdlib>   // rand, srand
+#include <ctime>     // time
 
 using namespace std;
 
@@ -34,33 +36,32 @@ const Uint64 THOI_GIAN_NO = 2000;   // bom no sau 2 giay
 const Uint64 THOI_GIAN_LUA = 500;   // lua ton tai 0.5 giay
 const int TAM_NO = 2;               // ban kinh no: lan 2 o moi huong
 
-int tileMap[MAPS_ROWS][MAPS_COLS] = {
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-    {1, 0, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 1},
-    {1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 1},
-    {1, 2, 2, 2, 0, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 0, 2, 2, 2, 2, 1},
-    {1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 1},
-    {1, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 1},
-    {1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
-    {1, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 1},
-    {1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
-    {1, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 0, 2, 2, 1},
-    {1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 1},
-    {1, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 1},
-    {1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
-    {1, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 1},
-    {1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
-    {1, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 0, 2, 2, 1},
-    {1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 1},
-    {1, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 1},
-    {1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
-    {1, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 1},
-    {1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 1},
-    {1, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 2, 2, 2, 2, 2, 0, 2, 0, 2, 2, 1},
-    {1, 2, 1, 0, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 2, 1, 0, 1, 2, 1, 1},
-    {1, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 2, 2, 2, 0, 2, 0, 1},
-    {1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1},
-};
+// Ban do: 0=trong, 1=tuong cung, 2=hop (gach) pha duoc.
+// De trong luc dau, se duoc sinh ngau nhien bang taoBanDo().
+int tileMap[MAPS_ROWS][MAPS_COLS];
+
+// Sinh ban do ngau nhien kieu Bomberman.
+void taoBanDo() {
+    for (int r = 0; r < MAPS_ROWS; ++r) {
+        for (int c = 0; c < MAPS_COLS; ++c) {
+            // Tuong vien bao quanh
+            if (r == 0 || c == 0 || r == MAPS_ROWS - 1 || c == MAPS_COLS - 1)
+                tileMap[r][c] = 1;
+            // Cot tru co dinh o cac o chan (kieu luoi Bomberman)
+            else if (r % 2 == 0 && c % 2 == 0)
+                tileMap[r][c] = 1;
+            // Con lai: 75% la hop, 25% la o trong
+            else if (rand() % 100 < 75)
+                tileMap[r][c] = 2;
+            else
+                tileMap[r][c] = 0;
+        }
+    }
+    // Chua trong goc xuat phat (o hang 1, cot 1) de nguoi choi di duoc ngay
+    tileMap[1][1] = 0;
+    tileMap[1][2] = 0;
+    tileMap[2][1] = 0;
+}
 
 // Kiem tra nhan vat o vi tri (x, y) co dam vao tuong (1) hoac hop (2) khong.
 // x, y la goc tren-trai cua nhan vat, kich thuoc TILE_SIZE x TILE_SIZE.
@@ -89,6 +90,10 @@ int main(int argc, char* argv[]) {
         cout << "Loi khoi tao SDL3: " << SDL_GetError() << endl;
         return -1;
     }
+
+    // Gieo so ngau nhien theo thoi gian roi sinh ban do
+    srand((unsigned)time(nullptr));
+    taoBanDo();
 
     SDL_Window* window = nullptr;
     SDL_Renderer* renderer = nullptr;
@@ -122,9 +127,20 @@ int main(int argc, char* argv[]) {
         cout << "Khong tim thay bomb.png hoac explosion.png!" << endl;
     }
 
+    // Anh trai tim cho HUD mang
+    SDL_Texture* timTex = IMG_LoadTexture(renderer, "heart.png");
+    if (!timTex) {
+        cout << "Khong tim thay heart.png!" << endl;
+    }
+
     // Danh sach bom va lua dang co tren ban do
     vector<Bom> danhSachBom;
     vector<Lua> danhSachLua;
+
+    // Mang song va thoi gian bat tu
+    int mang = 3;
+    Uint64 thoiGianBatTu = 0;                 // player bat tu khi bayGio < gia tri nay
+    const Uint64 THOI_GIAN_BAT_TU = 2000;     // bat tu 2 giay khi hoi sinh
 
     // Kich thuoc 1 khung tren sheet (goc, chua phong to)
     const int KHUNG_W = 20;
@@ -165,6 +181,14 @@ int main(int argc, char* argv[]) {
                 if (state == STATE_MENU) {
                     if (event.key.key == SDLK_RETURN || event.key.key == SDLK_SPACE) {
                         state = STATE_PLAYING;
+                        // Bat dau van moi: reset moi thu
+                        mang = 3;
+                        nguoiChoiX = 1 * TILE_SIZE;
+                        nguoiChoiY = 1 * TILE_SIZE;
+                        danhSachBom.clear();
+                        danhSachLua.clear();
+                        taoBanDo();                 // sinh ban do moi
+                        thoiGianBatTu = 0;
                     }
                     else if (event.key.key == SDLK_ESCAPE) {
                         isRunning = false;
@@ -294,6 +318,29 @@ int main(int argc, char* argv[]) {
                 else
                     ++i;
             }
+
+            // ----- Nhan vat dinh lua thi chet (tru khi dang bat tu) -----
+            if (bayGio >= thoiGianBatTu) {
+                int hangNV = (int)(nguoiChoiY + TILE_SIZE / 2.0f) / TILE_SIZE;
+                int cotNV = (int)(nguoiChoiX + TILE_SIZE / 2.0f) / TILE_SIZE;
+                for (const Lua& l : danhSachLua) {
+                    if (l.hang == hangNV && l.cot == cotNV) {
+                        mang--;
+                        if (mang > 0) {
+                            // Hoi sinh tai goc xuat phat + bat tu 2 giay
+                            nguoiChoiX = 1 * TILE_SIZE;
+                            nguoiChoiY = 1 * TILE_SIZE;
+                            huong = 0;
+                            thoiGianBatTu = bayGio + THOI_GIAN_BAT_TU;
+                        }
+                        else {
+                            // Het mang -> ve menu (thua)
+                            state = STATE_MENU;
+                        }
+                        break;
+                    }
+                }
+            }
         }
 
         // ===== VE MAN HINH =====
@@ -354,13 +401,25 @@ int main(int argc, char* argv[]) {
             nguon.w = (float)KHUNG_W;
             nguon.h = (float)KHUNG_H;
 
-            SDL_RenderTexture(renderer, nguoiChoiSheet, &nguon, &oNhanVat);
+            // Khi bat tu thi nhap nhay (an hien 150ms mot lan)
+            Uint64 tVe = SDL_GetTicks();
+            bool hienNhanVat = true;
+            if (tVe < thoiGianBatTu && (tVe / 150) % 2 == 0)
+                hienNhanVat = false;
+            if (hienNhanVat)
+                SDL_RenderTexture(renderer, nguoiChoiSheet, &nguon, &oNhanVat);
 
             // Ve lua (nam tren cung)
             for (const Lua& l : danhSachLua) {
                 SDL_FRect r = { (float)(l.cot * TILE_SIZE), (float)(l.hang * TILE_SIZE),
                                 (float)TILE_SIZE, (float)TILE_SIZE };
                 SDL_RenderTexture(renderer, luaTex, nullptr, &r);
+            }
+
+            // ----- HUD: ve trai tim theo so mang (goc tren-trai) -----
+            for (int i = 0; i < mang; ++i) {
+                SDL_FRect r = { 10.0f + i * 42.0f, 10.0f, 36.0f, 36.0f };
+                SDL_RenderTexture(renderer, timTex, nullptr, &r);
             }
         }
 
@@ -376,6 +435,7 @@ int main(int argc, char* argv[]) {
     SDL_DestroyTexture(nguoiChoiSheet);
     SDL_DestroyTexture(bomTex);
     SDL_DestroyTexture(luaTex);
+    SDL_DestroyTexture(timTex);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
