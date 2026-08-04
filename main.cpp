@@ -17,7 +17,10 @@ const int SCREEN_HEIGHT = MAPS_ROWS * TILE_SIZE;
 // Trang thai cua game
 enum GameState {
     STATE_MENU,
-    STATE_PLAYING
+    STATE_PLAYING,
+    STATE_PAUSE,    // tam dung
+    STATE_WIN,      // thang
+    STATE_LOSE      // thua (game over)
 };
 
 // Mot qua bom dat tren ban do
@@ -133,6 +136,14 @@ int main(int argc, char* argv[]) {
         cout << "Khong tim thay heart.png!" << endl;
     }
 
+    // Anh cac man thang / thua / tam dung
+    SDL_Texture* winTex = IMG_LoadTexture(renderer, "youwin.png");
+    SDL_Texture* gameoverTex = IMG_LoadTexture(renderer, "gameover.png");
+    SDL_Texture* pauseTex = IMG_LoadTexture(renderer, "pause.png");
+    if (!winTex || !gameoverTex || !pauseTex) {
+        cout << "Thieu youwin.png / gameover.png / pause.png!" << endl;
+    }
+
     // Danh sach bom va lua dang co tren ban do
     vector<Bom> danhSachBom;
     vector<Lua> danhSachLua;
@@ -169,6 +180,19 @@ int main(int argc, char* argv[]) {
     GameState state = STATE_MENU;
     SDL_Event event;
 
+    // Bat dau mot van moi: reset moi thu roi vao trang thai choi
+    auto batDauVanMoi = [&]() {
+        mang = 3;
+        nguoiChoiX = 1 * TILE_SIZE;
+        nguoiChoiY = 1 * TILE_SIZE;
+        huong = 0;
+        danhSachBom.clear();
+        danhSachLua.clear();
+        taoBanDo();               // sinh ban do moi
+        thoiGianBatTu = 0;
+        state = STATE_PLAYING;
+    };
+
     while (isRunning) {
 
         // ===== XU LY SU KIEN =====
@@ -180,23 +204,37 @@ int main(int argc, char* argv[]) {
 
                 if (state == STATE_MENU) {
                     if (event.key.key == SDLK_RETURN || event.key.key == SDLK_SPACE) {
-                        state = STATE_PLAYING;
-                        // Bat dau van moi: reset moi thu
-                        mang = 3;
-                        nguoiChoiX = 1 * TILE_SIZE;
-                        nguoiChoiY = 1 * TILE_SIZE;
-                        danhSachBom.clear();
-                        danhSachLua.clear();
-                        taoBanDo();                 // sinh ban do moi
-                        thoiGianBatTu = 0;
+                        batDauVanMoi();             // bat dau van moi
                     }
                     else if (event.key.key == SDLK_ESCAPE) {
                         isRunning = false;
                     }
                 }
+                // Man thang / thua: ENTER choi lai, ESC thoat
+                else if (state == STATE_WIN || state == STATE_LOSE) {
+                    if (event.key.key == SDLK_RETURN) {
+                        batDauVanMoi();
+                    }
+                    else if (event.key.key == SDLK_ESCAPE) {
+                        isRunning = false;
+                    }
+                }
+                // Tam dung: P tiep tuc, ESC ve menu
+                else if (state == STATE_PAUSE) {
+                    if (event.key.key == SDLK_P) {
+                        state = STATE_PLAYING;
+                    }
+                    else if (event.key.key == SDLK_ESCAPE) {
+                        state = STATE_MENU;
+                    }
+                }
                 else if (state == STATE_PLAYING) {
                     if (event.key.key == SDLK_ESCAPE) {
                         state = STATE_MENU;
+                    }
+                    // P -> tam dung
+                    else if (event.key.key == SDLK_P) {
+                        state = STATE_PAUSE;
                     }
                     // SPACE -> dat bom tai o nhan vat dang dung
                     else if (event.key.key == SDLK_SPACE) {
@@ -334,13 +372,22 @@ int main(int argc, char* argv[]) {
                             thoiGianBatTu = bayGio + THOI_GIAN_BAT_TU;
                         }
                         else {
-                            // Het mang -> ve menu (thua)
-                            state = STATE_MENU;
+                            // Het mang -> man thua
+                            state = STATE_LOSE;
                         }
                         break;
                     }
                 }
             }
+
+            // ----- Dieu kien THANG (tam thoi): pha het gach -----
+            // TODO: khi them quai, doi thanh "diet het quai vat".
+            bool conGach = false;
+            for (int r = 0; r < MAPS_ROWS && !conGach; ++r)
+                for (int c = 0; c < MAPS_COLS; ++c)
+                    if (tileMap[r][c] == 2) { conGach = true; break; }
+            if (!conGach && state == STATE_PLAYING)
+                state = STATE_WIN;
         }
 
         // ===== VE MAN HINH =====
@@ -350,7 +397,13 @@ int main(int argc, char* argv[]) {
             }
             
         }
-        else if (state == STATE_PLAYING) {
+        else if (state == STATE_WIN) {
+            SDL_RenderTexture(renderer, winTex, nullptr, nullptr);
+        }
+        else if (state == STATE_LOSE) {
+            SDL_RenderTexture(renderer, gameoverTex, nullptr, nullptr);
+        }
+        else if (state == STATE_PLAYING || state == STATE_PAUSE) {
             // Ve ban do
             SDL_SetRenderDrawColor(renderer, 20, 40, 80, 255);
             SDL_RenderClear(renderer);
@@ -421,6 +474,11 @@ int main(int argc, char* argv[]) {
                 SDL_FRect r = { 10.0f + i * 42.0f, 10.0f, 36.0f, 36.0f };
                 SDL_RenderTexture(renderer, timTex, nullptr, &r);
             }
+
+            // Neu dang tam dung -> phu lop pause len tren
+            if (state == STATE_PAUSE) {
+                SDL_RenderTexture(renderer, pauseTex, nullptr, nullptr);
+            }
         }
 
         SDL_RenderPresent(renderer);
@@ -436,6 +494,9 @@ int main(int argc, char* argv[]) {
     SDL_DestroyTexture(bomTex);
     SDL_DestroyTexture(luaTex);
     SDL_DestroyTexture(timTex);
+    SDL_DestroyTexture(winTex);
+    SDL_DestroyTexture(gameoverTex);
+    SDL_DestroyTexture(pauseTex);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
